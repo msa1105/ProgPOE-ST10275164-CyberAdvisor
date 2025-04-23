@@ -1,5 +1,3 @@
-Here's a professional and complete `README.md` for your **CyberAdvisor** project. This includes project description, features, setup, usage, and contribution guidelines.
-
 ```markdown
 # 🧠 CyberAdvisor - Console-Based Cybersecurity Chatbot
 
