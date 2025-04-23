@@ -57,7 +57,7 @@ cd ProgPOE-Part1-ST10275164-CyberAdvisor
 
 ## 🧪 GitHub Actions - CI
 
-A CI workflow is configured in `.github/workflows/ci.yml`. It runs on each `push` or `pull_request` to:
+A CI workflow is configured in `.github/workflows/main.yml`. It runs on each `push` or `pull_request` to:
 - Check for syntax errors
 - Validate a successful build
 
