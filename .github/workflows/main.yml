@@ -1,17 +1,19 @@
-name: .NET Build & Check
+name: .NET Build and Lint
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest
+
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v3
 
     - name: Setup .NET
@@ -22,8 +24,8 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Build project
+    - name: Build
       run: dotnet build --no-restore --configuration Release
 
-    - name: Format check
-      run: dotnet format --verify-no-changes || true
+    - name: Run basic syntax check
+      run: dotnet format --verify-no-changes
