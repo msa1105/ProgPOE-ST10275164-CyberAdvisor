@@ -109,3 +109,6 @@ Just type `"exit"` to end the chat.
 Student Number: ST10275164
 
 ---
+
+
+(this readme file's structure was provided to me by chatgpt)
