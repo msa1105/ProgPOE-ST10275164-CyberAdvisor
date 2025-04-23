@@ -6,20 +6,20 @@ using ProgPOE_Part1_ST10275164_CyberAdvisor;
 
 class Program
 {
-    // Create a single user object to store the name
+    // function to create a single user object to store the name in botuser.cs class
     static BotUser currentUser = new BotUser();
 
     static void Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-        PlayWelcomeAudio();      //Plays the welcome audio
-        
-        DisplayAsciiLogo();      //Show ASCII art
+        PlayWelcomeAudio();      //this plays the welcome audio
 
-        AskForUserName();        //Ask for name
+        DisplayAsciiLogo();      //this shows the ASCII art
 
-        // Chat loop
+        AskForUserName();        //this asks you for your name
+
+        // this initiates and controls the chat loop
         while (true)
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -37,36 +37,36 @@ class Program
         }
     }
 
-    // 1. Play .wav greeting using SoundPlayer
+    //plays .wav greeting using SoundPlayer
 
-static void PlayWelcomeAudio()
-{
-    try
+    static void PlayWelcomeAudio()
     {
-        using (SoundPlayer player = new SoundPlayer("C:\\Users\\alexa\\source\\repos\\ProgPOE-Part1-ST10275164-CyberAdvisor\\ProgPOE-Part1-ST10275164-CyberAdvisor\\Assets\\welcome.wav"))
+        try
         {
-                player.Load();    // Optional: Preload audio
-                player.PlaySync(); // Use PlaySync to block until it's finished
+            using (SoundPlayer player = new SoundPlayer("C:\\Users\\alexa\\source\\repos\\ProgPOE-Part1-ST10275164-CyberAdvisor\\ProgPOE-Part1-ST10275164-CyberAdvisor\\Assets\\welcome.wav"))
+            {
+                player.Load();    // (optional) this preloads audio
+                player.PlaySync(); // uses PlaySync to block the loading of the app until it's finished
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Error playing audio: " + ex.Message);
+            Console.ResetColor();
         }
     }
-    catch (Exception ex)
-    {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine("Error playing audio: " + ex.Message);
-        Console.ResetColor();
-    }
-}
 
 
-// 2. Show ASCII logo using Figgle
-static void DisplayAsciiLogo()
+    //this is the function that shows the ASCII logo using Figgle
+    static void DisplayAsciiLogo()
     {
         Console.ForegroundColor = ConsoleColor.Magenta;
         Console.WriteLine(FiggleFonts.Slant.Render("CyberAdvisor"));
         Console.ResetColor();
     }
 
-    // 3. Ask for user's name
+    //this function asks for the user's name and stores it (botuser.cs)
     static void AskForUserName()
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
@@ -90,7 +90,7 @@ static void DisplayAsciiLogo()
         Console.ResetColor();
     }
 
-    // 4. Respond based on user input
+    // this allows the bot to respond based on user inputs using if.contains statements
     static void RespondToUser(string input)
     {
         input = input.ToLower().Trim();
@@ -185,7 +185,7 @@ static void DisplayAsciiLogo()
             Console.ResetColor();
             Environment.Exit(0);
         }
-        else
+        else  // this is to respond to misinputs and keep the flow of the conversation
         {
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine($"Hmm... I didn’t understand that, {currentUser.Name}. Try asking about phishing, passwords, or safe browsing.");
