@@ -41,18 +41,27 @@ class Program
 
     static void PlayWelcomeAudio()
     {
-        try
+        if (OperatingSystem.IsWindows())
         {
-            using (SoundPlayer player = new SoundPlayer("C:\\Users\\alexa\\source\\repos\\ProgPOE-Part1-ST10275164-CyberAdvisor\\ProgPOE-Part1-ST10275164-CyberAdvisor\\Assets\\welcome.wav"))
+            try
             {
-                player.Load();    // (optional) this preloads audio
-                player.PlaySync(); // uses PlaySync to block the loading of the app until it's finished
+                using (SoundPlayer player = new SoundPlayer("C:\\Users\\alexa\\source\\repos\\ProgPOE-Part1-ST10275164-CyberAdvisor\\ProgPOE-Part1-ST10275164-CyberAdvisor\\Assets\\welcome.wav"))
+                {
+                    player.Load();    // Preloads audio
+                    player.PlaySync(); // Plays audio synchronously
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error playing audio: " + ex.Message);
+                Console.ResetColor();
             }
         }
-        catch (Exception ex)
+        else
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Error playing audio: " + ex.Message);
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Audio playback is not supported on this platform.");
             Console.ResetColor();
         }
     }
