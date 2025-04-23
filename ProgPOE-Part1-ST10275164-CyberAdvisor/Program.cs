@@ -6,7 +6,6 @@ using ProgPOE_Part1_ST10275164_CyberAdvisor;
 
 class Program
 {
-    // function to create a single user object to store the name in botuser.cs class
     static BotUser currentUser = new BotUser();
 
     static void Main(string[] args)
