@@ -94,11 +94,11 @@ CyberAdvisor is an advanced console-based C# chatbot application that serves as 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/ProgPOE-Part1-ST10275164-CyberAdvisor.git
+git clone https://github.com/YOUR_USERNAME/ProgPOE-ST10275164-CyberAdvisor.git
 cd ProgPOE-Part1-ST10275164-CyberAdvisor
 ```
 
-2. Open the solution in Visual Studio (`ProgPOE-Part1-ST10275164-CyberAdvisor.sln`)
+2. Open the solution in Visual Studio (`ProgPOE-ST10275164-CyberAdvisor.sln`)
 
 3. Install NuGet packages:
    - `Figgle`
