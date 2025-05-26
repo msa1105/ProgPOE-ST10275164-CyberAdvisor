@@ -18,7 +18,8 @@ class Program
     static ResponseManager.ResponseModifier personalizedModifier = (response, user, sentiment) =>
         $"[{sentiment.ToUpper()}] {response}";
 
-    static void Main(string[] args)
+    static void Main(string[] args) // Based on: https://stackoverflow.com/questions/3505561/how-to-play-a-wav-file-in-c-sharp
+
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -30,7 +31,8 @@ class Program
         //this starts the chatbot loop
         while (true)
         {
-            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.ForegroundColor = ConsoleColor.Cyan; // Reference: https://stackoverflow.com/questions/5114485/changing-console-foreground-color-in-c-sharp
+
             Console.Write($"\n💬 {currentUser.Name}, ask me anything (type 'exit' to quit): ");
             Console.ResetColor();
 
@@ -361,7 +363,8 @@ class Program
         }
     }
 
-    static void ShowExitSummary()
+    static void ShowExitSummary() // Reference: https://stackoverflow.com/questions/4638993/calculate-time-difference-in-c
+
     {
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine("\n" + new string('═', 60));

@@ -10,7 +10,8 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 
         public SentimentAnalyzer()
         {
-            sentimentKeywords = new Dictionary<string, List<string>>
+            sentimentKeywords = new Dictionary<string, List<string>> // Reference: https://stackoverflow.com/questions/2099340/using-a-dictionary-with-list-values
+
             {
                 ["worried"] = new List<string> { "worried", "concerned", "anxious", "scared", "afraid", "nervous", "panic", "stress" },
                 ["curious"] = new List<string> { "curious", "interested", "wonder", "learn", "know more", "tell me", "explain", "how does" },

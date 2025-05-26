@@ -4,7 +4,8 @@ using System.Linq;
 
 namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 {
-    public class ResponseManager
+    public class ResponseManager // Reference: https://stackoverflow.com/questions/13206839/how-to-use-a-delegate-in-c-sharp
+
     {
         private readonly Dictionary<string, List<string>> keywordResponses;
         private readonly Dictionary<string, List<string>> sentimentResponses;
@@ -26,7 +27,8 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             InitializeFallbackResponses();
         }
 
-        private void InitializeKeywordResponses()
+        private void InitializeKeywordResponses() // Reference: https://stackoverflow.com/questions/3132126/how-do-i-select-a-random-value-from-a-listt
+
         {
             keywordResponses["password"] = new List<string>
             {
@@ -127,7 +129,7 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             fallbackResponses.Add("That's outside my expertise area. I'm great with cybersecurity topics though - try asking about those!");
         }
 
-        public string GetKeywordResponse(string keyword, BotUser user, string sentiment = "neutral")
+        public string GetKeywordResponse(string keyword, BotUser user, string sentiment = "neutral") // Reference: https://stackoverflow.com/questions/6004219/how-do-i-search-for-a-value-in-a-dictionary
         {
             // Find matching keyword
             var matchingKeyword = keywordResponses.Keys.FirstOrDefault(k =>

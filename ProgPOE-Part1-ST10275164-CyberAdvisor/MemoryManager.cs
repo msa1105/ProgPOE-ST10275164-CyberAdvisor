@@ -5,7 +5,10 @@ using System.Text.RegularExpressions;
 
 namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 {
-    public class MemoryManager
+    public class MemoryManager // Reference: https://stackoverflow.com/questions/16199015/regex-to-match-age-in-a-sentence
+                               // Reference: https://stackoverflow.com/questions/13206839/how-to-use-a-delegate-in-c-sharp
+
+
     {
         private  Dictionary<string, Action<BotUser, string>> memoryPatterns;
         private  List<string> personalityTraits;
@@ -20,7 +23,8 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             personalityTraits = new List<string> { "cautious", "curious", "tech-savvy", "beginner", "experienced" };
         }
 
-        private void InitializeMemoryPatterns()
+        private void InitializeMemoryPatterns() // Reference: https://stackoverflow.com/questions/2099340/using-a-dictionary-with-list-values
+
         {
             memoryPatterns = new Dictionary<string, Action<BotUser, string>>
             {
@@ -137,7 +141,8 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             }
         }
 
-        private void ExtractAge(BotUser user, string input)
+        private void ExtractAge(BotUser user, string input) // Reference: https://stackoverflow.com/questions/16199015/regex-to-match-age-in-a-sentence
+
         {
             var ageMatch = Regex.Match(input, @"(\d{1,2})\s*years?\s*old");
             if (ageMatch.Success)
