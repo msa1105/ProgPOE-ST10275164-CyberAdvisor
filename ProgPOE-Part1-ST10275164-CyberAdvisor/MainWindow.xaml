@@ -64,7 +64,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0">
-                    <TextBlock Text="???" FontSize="32" Margin="0,0,10,0"/>
+                    <TextBlock Text="??" FontSize="32" Margin="0,0,10,0"/>
                     <StackPanel>
                         <TextBlock Text="CyberAdvisor" FontSize="24" FontWeight="Bold" Foreground="#FFECEFF4"/>
                         <TextBlock Text="Enhanced AI Security Mentor" FontSize="12" Foreground="#FF81A1C1"/>
@@ -74,10 +74,10 @@
                 <!-- MODIFIED: Added new buttons for features -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0">
                     <TextBlock x:Name="UserNameDisplay" Text="Welcome, Guest!" FontSize="14" Foreground="#FFECEFF4" Margin="0,0,15,0" VerticalAlignment="Center"/>
-                    <Button x:Name="TasksButton" Content="?? Tasks" Style="{StaticResource SendButtonStyle}" Background="#FFD08770" Click="TasksButton_Click" Margin="0,0,10,0"/>
-                    <Button x:Name="QuizButton" Content="? Quiz" Style="{StaticResource SendButtonStyle}" Background="#FFA3BE8C" Click="QuizButton_Click" Margin="0,0,10,0"/>
-                    <Button x:Name="ActivityLogButton" Content="?? Log" Style="{StaticResource SendButtonStyle}" Background="#FFB48EAD" Click="ActivityLogButton_Click" Margin="0,0,10,0"/>
-                    <Button x:Name="ShowStatsButton" Content="?? Stats" Style="{StaticResource SendButtonStyle}" Click="ShowStatsButton_Click" Margin="0,0,10,0"/>
+                    <Button x:Name="TasksButton" Content="?? Tasks" Style="{StaticResource SendButtonStyle}" Background="#FFFCF8F7" Click="TasksButton_Click" Margin="0,0,10,0" Foreground="Black"/>
+                    <Button x:Name="QuizButton" Content="? Quiz" Style="{StaticResource SendButtonStyle}" Background="White" Click="QuizButton_Click" Margin="0,0,10,0"/>
+                    <Button x:Name="ActivityLogButton" Content="??? Log" Style="{StaticResource SendButtonStyle}" Background="White" Click="ActivityLogButton_Click" Margin="0,0,10,0"/>
+                    <Button x:Name="ShowStatsButton" Content="?? Stats" Style="{StaticResource SendButtonStyle}" Click="ShowStatsButton_Click" Margin="0,0,10,0" Background="White"/>
                     <Button x:Name="ClearChatButton" Content="Clear Chat" Style="{StaticResource SendButtonStyle}" Background="#FFBF616A" Click="ClearChatButton_Click"/>
                 </StackPanel>
             </Grid>

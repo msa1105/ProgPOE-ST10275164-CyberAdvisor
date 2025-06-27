@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using MessageBox = System.Windows.MessageBox;
 
 namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 {
@@ -16,7 +17,6 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
         {
             InitializeComponent();
             _tasks = tasks;
-           
             LoadTasks();
         }
 
@@ -38,15 +38,21 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 
         private void AddButton_Click(object sender, RoutedEventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(TitleTextBox.Text))
+            {
+                MessageBox.Show("Please enter a title for the task.", "Title Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var newTask = new CyberTask
             {
                 Title = TitleTextBox.Text,
                 Description = DescriptionTextBox.Text,
-                DueDate = DueDatePicker.SelectedDate ?? DateTime.Now.AddDays(1),
+                DueDate = DueDatePicker.SelectedDate, // Can be null
                 IsCompleted = false
             };
             _tasks.Add(newTask);
-            ActivityLogger.Log(ActivityType.Task, $"Created: {newTask.Title}");
+            ActivityLogger.Log(ActivityType.Task, $"Added: {newTask.Title}");
             LoadTasks();
             ClearForm();
         }
@@ -57,7 +63,8 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             {
                 selectedTask.Title = TitleTextBox.Text;
                 selectedTask.Description = DescriptionTextBox.Text;
-                selectedTask.DueDate = DueDatePicker.SelectedDate ?? selectedTask.DueDate;
+                // This correctly allows clearing a date by setting it to null.
+                selectedTask.DueDate = DueDatePicker.SelectedDate;
                 ActivityLogger.Log(ActivityType.Task, $"Updated: {selectedTask.Title}");
                 LoadTasks();
             }
@@ -68,7 +75,8 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             if (TasksListView.SelectedItem is CyberTask selectedTask)
             {
                 selectedTask.IsCompleted = !selectedTask.IsCompleted;
-                ActivityLogger.Log(ActivityType.Task, $"Toggled Complete: {selectedTask.Title}");
+                string status = selectedTask.IsCompleted ? "Completed" : "Marked as not complete";
+                ActivityLogger.Log(ActivityType.Task, $"{status}: {selectedTask.Title}");
                 LoadTasks();
             }
         }
@@ -93,17 +101,10 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
         }
     }
 
-    // Helper class to convert boolean to emoji for the UI
+    // Helper class for UI binding remains unchanged.
     public class BoolToEmojiConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return (bool)value ? "✅" : "❌";
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => (bool)value ? "✅" : "❌";
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 }
