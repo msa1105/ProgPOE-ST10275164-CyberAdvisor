@@ -53,18 +53,114 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             AddTopicIntent(intents, "Encryption", new List<string> { "encryption", "encrypt", "end-to-end", "e2ee", "bitlocker" });
 
             // --- Functional Intents (Added more pattern variations) ---
-            intents.Add(new IntentDefinition { Name = "CreateTask", Patterns = new List<string> { @"remind me to (?<task>.+?)\s+(on|at|in)\s+(?<time>.+)", @"set a reminder for (?<task>.+?)\s+(on|at|in)\s+(?<time>.+)", @"add task (?<task>.+?) for (?<time>.+)" } });
-            intents.Add(new IntentDefinition { Name = "ListTasks", Patterns = new List<string> { @"(show|list|see|view|what are|check)\s+(my\s+)?(tasks|reminders|to-dos)" } });
-            intents.Add(new IntentDefinition { Name = "StartQuiz", Patterns = new List<string> { @"(start|take|begin|do|launch)\s+quiz", @"test my knowledge", @"give me a quiz" } });
-            intents.Add(new IntentDefinition { Name = "StopQuiz", Patterns = new List<string> { @"(stop|end|quit|exit)\s+quiz" } }); // New intent for robustness
-            intents.Add(new IntentDefinition { Name = "ViewLog", Patterns = new List<string> { @"(show|view)\s+(my\s+)?(activity|log|history)" } });
-            intents.Add(new IntentDefinition { Name = "ViewMoreLog", Patterns = new List<string> { @"show\s+more", @"next\s+page", @"\b(more|next)\b" } });
-            intents.Add(new IntentDefinition { Name = "Greeting", Patterns = new List<string> { @"\b(hi|hello|hey|yo|howdy|good morning|good afternoon)\b" } });
-            intents.Add(new IntentDefinition { Name = "ThankYou", Patterns = new List<string> { @"\b(thanks|thank you|thx|cheers|appreciated)\b" } });
-            intents.Add(new IntentDefinition { Name = "Help", Patterns = new List<string> { @"\b(help|options|commands|what can you do)\b" } });
+            intents.Add(new IntentDefinition
+            {
+                Name = "CreateTask",
+                Patterns = new List<string>
+                {
+                    @"remind me to (?<task>.+?)\s+(on|at|in)\s+(?<time>.+)",
+                    @"set a reminder for (?<task>.+?)\s+(on|at|in)\s+(?<time>.+)",
+                    @"add task (?<task>.+?) for (?<time>.+)"
+                }
+            });
 
-            return intents;
-        }
+            intents.Add(new IntentDefinition
+            {
+                Name = "ListTasks",
+                Patterns = new List<string>
+                {
+                    @"(show|list|see|view|what are|check)\s+(my\s+)?(tasks|reminders|to-dos)"
+                }
+            });
+
+            intents.Add(new IntentDefinition
+            {
+                Name = "StartQuiz",
+                Patterns = new List<string>
+                {
+                    @"(start|take|begin|do|launch)\s+quiz",
+                    @"test my knowledge",
+                    @"give me a quiz"
+                }
+            });
+
+            intents.Add(new IntentDefinition
+            {
+                Name = "StopQuiz",
+                Patterns = new List<string>
+                {
+                    @"(stop|end|quit|exit)\s+quiz"
+                }
+            }); // New intent for robustness
+
+            intents.Add(new IntentDefinition
+            {
+                Name = "ViewLog",
+                Patterns = new List<string>
+                {
+                    @"(show|view)\s+(my\s+)?(activity|log|history)"
+                }
+            });
+
+            intents.Add(new IntentDefinition
+            {
+                Name = "ViewMoreLog",
+                Patterns = new List<string>
+                {
+                    @"show\s+more",
+                    @"next\s+page",
+                    @"\b(more|next)\b"
+                }
+            });
+
+            intents.Add(new IntentDefinition
+            {
+                Name = "Greeting",
+                Patterns = new List<string>
+                {
+                    @"\b(hi|hello|hey|yo|howdy|good morning|good afternoon)\b"
+                }
+            });
+
+            intents.Add(new IntentDefinition
+            {
+                Name = "ThankYou",
+                Patterns = new List<string>
+                {
+                    @"\b(thanks|thank you|thx|cheers|appreciated)\b"
+                }
+            });
+
+            intents.Add(new IntentDefinition
+            {
+                Name = "Help",
+                Patterns = new List<string>
+                {
+                    @"\b(help|options|commands|what can you do)\b"
+                }
+            });
+            // This intent catches when a user is providing information without asking a question.
+            intents.Add(new IntentDefinition
+            {
+                Name = "AcknowledgeInfo",
+                Patterns = new List<string>
+            {
+                    @"i work as", @"my job is", @"i use an?", @"i have an?", @"i'm new to", @"i am experienced"
+            }
+            });
+
+            // This intent lets the user ask what the bot remembers.
+            intents.Add(new IntentDefinition
+            {
+                Name = "RecallMemory",
+                Patterns = new List<string>
+            {
+                    @"what do you know about me", @"what do you remember", @"what have i told you"
+            }
+            });
+
+                return intents;
+            }
 
         private void AddTopicIntent(List<IntentDefinition> intents, string topicName, List<string> keywords, List<string> phrases = null)
         {

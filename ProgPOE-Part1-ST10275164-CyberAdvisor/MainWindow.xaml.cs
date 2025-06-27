@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using static System.Windows.Forms.Design.AxImporter;
 using Brushes = System.Windows.Media.Brushes;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 
@@ -23,12 +24,12 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
         private readonly SentimentAnalyzer sentimentAnalyzer;
         private readonly ResponseManager responseManager;
         private readonly NluEngine nluEngine;
+        private readonly MemoryManager memoryManager; // <<< FIX: This line was missing
 
         // UI Components & State Management
         private readonly DispatcherTimer typingIndicatorTimer;
         private const string PlaceholderText = "Ask me anything, or type 'help' for commands...";
 
-        // State fields for managing special conversational modes
         private bool _isQuizActive = false;
         private List<QuizQuestion> _quizQuestions;
         private int _currentQuizQuestionIndex;
@@ -47,6 +48,7 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             sentimentAnalyzer = new SentimentAnalyzer();
             responseManager = new ResponseManager();
             nluEngine = new NluEngine();
+            memoryManager = new MemoryManager(); // <<< FIX: This line was missing
 
             // Setup UI elements and timers
             typingIndicatorTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
@@ -61,12 +63,9 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             ChatPanel.Children.Clear();
             ActivityLogger.Clear();
             ActivityLogger.Log(ActivityType.System, "New session started.");
-
-            // Reset all stateful modes
             _isQuizActive = false;
-            _logPageIndex = -1; // Set to -1 to require a fresh "show log" command
+            _logPageIndex = -1;
 
-            // Set placeholder and kick off welcome sequence
             InputTextBox.Text = PlaceholderText;
             InputTextBox.Foreground = Brushes.Gray;
             PlayWelcomeAudio();
@@ -86,10 +85,6 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
         private async void SendButton_Click(object sender, RoutedEventArgs e) => await HandleUserInput();
         private async void InputTextBox_KeyDown(object sender, KeyEventArgs e) { if (e.Key == Key.Enter) await HandleUserInput(); }
 
-        /// <summary>
-        /// This is the primary entry point for all user input.
-        /// It routes the input to the correct handler based on the application's current state.
-        /// </summary>
         private async Task HandleUserInput()
         {
             string userInput = InputTextBox.Text.Trim();
@@ -99,10 +94,8 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             ResetInputBox();
 
             ShowTypingIndicator(true);
-            await Task.Delay(new Random().Next(400, 800)); // Simulate bot "thinking"
+            await Task.Delay(new Random().Next(400, 800));
 
-            // --- STATEFUL ROUTING ---
-            // The bot's response depends on its current mode (e.g., in a quiz or not).
             if (_isQuizActive)
             {
                 await ProcessQuizInputAsync(userInput);
@@ -123,12 +116,11 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 
         #region NLU Intent Processing
 
-        /// <summary>
-        /// Processes user input when the bot is in a normal conversational state.
-        /// It uses the NLU engine to understand the user's goal and dispatches to the correct handler.
-        /// </summary>
         private async Task<string> ProcessNluIntentAsync(string input)
         {
+            // --- Always try to learn from the user's input first ---
+            memoryManager.ProcessInput(currentUser, input);
+
             ActivityLogger.Log(ActivityType.Chat, $"User: {input}");
             DetectedIntent intent = nluEngine.Process(input);
             string response = "";
@@ -136,11 +128,19 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             switch (intent.Name)
             {
                 case "GetInfo":
-                    response = responseManager.GetKeywordResponse(intent.Topic, currentUser);
+                    string personalization = memoryManager.GeneratePersonalizedResponse(currentUser, intent.Topic);
+                    string mainResponse = responseManager.GetKeywordResponse(intent.Topic, currentUser);
+                    response = $"{personalization} {mainResponse}".Trim();
+                    break;
+                case "AcknowledgeInfo":
+                    response = "Thanks, I'll remember that for our conversation!";
+                    break;
+                case "RecallMemory":
+                    response = HandleRecallMemoryIntent();
                     break;
                 case "StartQuiz":
                     await StartQuizAsync();
-                    break; // The StartQuiz method handles its own chat messages.
+                    break;
                 case "CreateTask":
                     response = HandleCreateTaskIntent(intent);
                     break;
@@ -148,7 +148,7 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
                     response = HandleListTasksIntent();
                     break;
                 case "ViewLog":
-                    _logPageIndex = 0; // Reset to the first page
+                    _logPageIndex = 0;
                     response = FormatLogPage();
                     break;
                 case "ViewMoreLog":
@@ -157,22 +157,21 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
                     break;
                 case "Greeting":
                     response = $"Hello {currentUser.Name}! How can I assist you with your cybersecurity today?";
-                    _logPageIndex = -1; // Reset log paging on new topics
+                    _logPageIndex = -1;
                     break;
                 case "ThankYou":
                     response = $"You're welcome, {currentUser.Name}! Stay safe online.";
                     break;
                 case "Help":
                     ShowHelp();
-                    break; // The ShowHelp method handles its own chat message.
+                    break;
                 case "Fallback":
                 default:
-                    _logPageIndex = -1; // Reset log paging on unrecognized input
+                    _logPageIndex = -1;
                     response = responseManager.GetFallbackResponse(currentUser);
                     break;
             }
 
-            // Handle name-setting as a special case that can happen at any time
             var nameMatch = Regex.Match(input, @"(?:my name is|call me|i am)\s+([A-Za-z]+)", RegexOptions.IgnoreCase);
             if (nameMatch.Success)
             {
@@ -182,6 +181,22 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             }
 
             if (!string.IsNullOrEmpty(response)) ActivityLogger.Log(ActivityType.Chat, $"Bot: {response.Split('\n').First()}");
+            return response;
+        }
+
+        private string HandleRecallMemoryIntent()
+        {
+            if (!currentUser.PersonalInfo.Any())
+            {
+                return "You haven't told me anything personal about yourself yet. Feel free to mention your job, devices you use, or your experience level with tech!";
+            }
+
+            var response = "Here's what I remember about you:\n";
+            foreach (var entry in currentUser.PersonalInfo)
+            {
+                var key = char.ToUpper(entry.Key[0]) + entry.Key.Substring(1).Replace("_", " ");
+                response += $"\n• {key}: {entry.Value}";
+            }
             return response;
         }
 
@@ -289,7 +304,7 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
                 await AddBotMessageWithDelay(summary, "summary", 500);
                 ActivityLogger.Log(ActivityType.Quiz, $"Quiz finished with score: {_quizScore}/{_quizQuestions.Count}");
             }
-            _isQuizActive = false; // This is the crucial step to exit the state
+            _isQuizActive = false;
         }
 
         private string FormatLogPage()
@@ -318,7 +333,200 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 
         private List<QuizQuestion> InitializeQuestions()
         {
-            return new List<QuizQuestion> { /* ... same 10 questions as before ... */ };
+            return new List<QuizQuestion> {
+
+            // --- Password & Authentication ---
+        new QuizQuestion {
+            QuestionText = "What is the most important factor for a strong password?",
+            Options = new List<string> { "Length", "Complexity (using !@#$)", "Using your pet's name" },
+            CorrectAnswerIndex = 0,
+            Explanation = "Length is the single most important factor. A long passphrase is much harder to crack than a short, complex one."
+        },
+        new QuizQuestion {
+            QuestionText = "A 'password manager' is a type of malware.",
+            Options = new List<string> { "True", "False" },
+            CorrectAnswerIndex = 1,
+            Explanation = "False. A password manager is a secure tool that helps you create and store unique, strong passwords for all your accounts."
+        },
+        new QuizQuestion {
+            QuestionText = "Which method of 2FA is generally considered the most secure?",
+            Options = new List<string> { "SMS (text message)", "Authenticator App", "Hardware Security Key" },
+            CorrectAnswerIndex = 2,
+            Explanation = "Hardware keys (like YubiKey) are the gold standard as they are immune to phishing. Authenticator apps are a strong second choice."
+        },
+        new QuizQuestion {
+            QuestionText = "What is 'Biometric' authentication?",
+            Options = new List<string> { "Using your location to log in", "Using a physical characteristic like a fingerprint or face", "Using a password you've memorized" },
+            CorrectAnswerIndex = 1,
+            Explanation = "Biometrics use something you 'are' (like a fingerprint) to verify your identity. It's often used to unlock phones and laptops."
+        },
+
+        // --- Malware & Threats ---
+        new QuizQuestion {
+            QuestionText = "What type of malware disguises itself as a legitimate program?",
+            Options = new List<string> { "Virus", "Worm", "Trojan" },
+            CorrectAnswerIndex = 2,
+            Explanation = "A Trojan Horse tricks you into installing it by pretending to be a useful piece of software, like a game or utility."
+        },
+        new QuizQuestion {
+            QuestionText = "Ransomware's primary goal is to:",
+            Options = new List<string> { "Steal your passwords", "Encrypt your files and demand payment", "Slow down your computer" },
+            CorrectAnswerIndex = 1,
+            Explanation = "Ransomware holds your data hostage by encrypting it and demands a ransom for its release."
+        },
+        new QuizQuestion {
+            QuestionText = "The best defense against ransomware is:",
+            Options = new List<string> { "A strong firewall", "Regular, offline backups", "A fast internet connection" },
+            CorrectAnswerIndex = 1,
+            Explanation = "If you have backups, you can restore your files without paying the ransom, rendering the attack useless."
+        },
+        new QuizQuestion {
+            QuestionText = "A 'keylogger' is a type of spyware that records your...",
+            Options = new List<string> { "Screen", "Keystrokes", "Webcam" },
+            CorrectAnswerIndex = 1,
+            Explanation = "Keyloggers capture everything you type, including passwords and private messages, making them extremely dangerous."
+        },
+        new QuizQuestion {
+            QuestionText = "A 'zero-day' vulnerability is:",
+            Options = new List<string> { "A security flaw with zero impact", "A flaw exploited by hackers before the developer has a patch for it", "A flaw found on the first day a program is released" },
+            CorrectAnswerIndex = 1,
+            Explanation = "It's called a 'zero-day' because the developers have had zero days to fix it, making it extremely dangerous."
+        },
+
+        // --- Social Engineering ---
+        new QuizQuestion {
+            QuestionText = "You receive an email from your bank asking you to click a link to verify your account. What should you do?",
+            Options = new List<string> { "Click the link and log in", "Ignore the email", "Open your browser and manually type your bank's website address to log in" },
+            CorrectAnswerIndex = 2,
+            Explanation = "Never click links in unexpected emails. Go directly to the official website to verify any account issues."
+        },
+        new QuizQuestion {
+            QuestionText = "'Smishing' is a type of phishing attack conducted via:",
+            Options = new List<string> { "Email", "Phone Call", "SMS (Text Message)" },
+            CorrectAnswerIndex = 2,
+            Explanation = "Smishing combines 'SMS' and 'phishing'. It's a very common way for scammers to send malicious links."
+        },
+        new QuizQuestion {
+            QuestionText = "A phishing email will often create a sense of...",
+            Options = new List<string> { "Calm and patience", "Urgency and fear", "Curiosity and excitement" },
+            CorrectAnswerIndex = 1,
+            Explanation = "Scammers want you to panic and act without thinking, so they use urgent language like 'account suspended' or 'act now'."
+        },
+        new QuizQuestion {
+            QuestionText = "What is 'social engineering'?",
+            Options = new List<string> { "A type of coding language", "Manipulating people to give up confidential information", "A social media marketing technique" },
+            CorrectAnswerIndex = 1,
+            Explanation = "Social engineering is the art of psychological manipulation. Phishing is a common form of it."
+        },
+        new QuizQuestion {
+            QuestionText = "An attacker calls you pretending to be from tech support and asks for remote access to your computer. This is an example of:",
+            Options = new List<string> { "Vishing", "A Denial-of-Service attack", "Ransomware" },
+            CorrectAnswerIndex = 0,
+            Explanation = "Vishing (Voice Phishing) uses phone calls to trick people into giving up access or information."
+        },
+
+        // --- Network & Web Security ---
+        new QuizQuestion {
+            QuestionText = "A VPN (Virtual Private Network) will:",
+            Options = new List<string> { "Make your internet faster", "Encrypt your internet traffic", "Block all viruses" },
+            CorrectAnswerIndex = 1,
+            Explanation = "A VPN's main purpose is to create a secure, encrypted tunnel for your data, protecting your privacy from eavesdroppers."
+        },
+        new QuizQuestion {
+            QuestionText = "Is it safe to do online banking on public Wi-Fi without a VPN?",
+            Options = new List<string> { "Yes, if the website is HTTPS", "No, it's never safe", "Only if the Wi-Fi has a password" },
+            CorrectAnswerIndex = 1,
+            Explanation = "No. An attacker on the same network can potentially intercept your data. Always use a VPN on public networks for sensitive tasks."
+        },
+        new QuizQuestion {
+            QuestionText = "What does a firewall primarily do?",
+            Options = new List<string> { "Scans for viruses", "Monitors and filters network traffic", "Backs up your files" },
+            CorrectAnswerIndex = 1,
+            Explanation = "A firewall acts as a barrier, controlling what traffic is allowed into or out of your network based on security rules."
+        },
+        new QuizQuestion {
+            QuestionText = "The padlock icon in your browser's address bar signifies what?",
+            Options = new List<string> { "The website is safe from malware", "The website is owned by a trusted company", "Your connection to the website is encrypted (HTTPS)" },
+            CorrectAnswerIndex = 2,
+            Explanation = "The padlock means your connection is encrypted, preventing eavesdropping. It does not guarantee the site itself is trustworthy."
+        },
+        new QuizQuestion {
+            QuestionText = "The most secure Wi-Fi encryption standard is:",
+            Options = new List<string> { "WEP", "WPA2", "WPA3" },
+            CorrectAnswerIndex = 2,
+            Explanation = "WPA3 is the latest and most secure standard. WEP is ancient and completely insecure."
+        },
+
+        // --- General Concepts & Best Practices ---
+        new QuizQuestion {
+            QuestionText = "Keeping your software updated is a critical security practice.",
+            Options = new List<string> { "True", "False" },
+            CorrectAnswerIndex = 0,
+            Explanation = "Updates often contain patches for security vulnerabilities that attackers can exploit. It's one of the easiest and most important security habits."
+        },
+        new QuizQuestion {
+            QuestionText = "You find a USB stick on the ground. What should you do?",
+            Options = new List<string> { "Plug it into your computer to find the owner", "Plug it into an isolated, non-critical computer", "Destroy it or turn it in to a lost and found without plugging it in" },
+            CorrectAnswerIndex = 2,
+            Explanation = "Never plug in unknown USB drives. They can be loaded with malware designed to automatically infect any computer they're connected to."
+        },
+        new QuizQuestion {
+            QuestionText = "What is the 'Principle of Least Privilege'?",
+            Options = new List<string> { "Giving a user the minimum levels of access needed to perform their job functions", "Always using the least expensive security software", "Privileging security over user convenience" },
+            CorrectAnswerIndex = 0,
+            Explanation = "This principle limits the damage that can result from an accident or a compromised account. A user with fewer permissions can do less harm."
+        },
+        new QuizQuestion {
+            QuestionText = "What is a 'data breach'?",
+            Options = new List<string> { "A type of network cable", "An intentional system shutdown", "An incident where sensitive information is stolen or released" },
+            CorrectAnswerIndex = 2,
+            Explanation = "In a data breach, confidential data like usernames, passwords, and credit card numbers are exposed to unauthorized individuals."
+        },
+        new QuizQuestion {
+            QuestionText = "You can check if your email has been exposed in a known data breach using which website?",
+            Options = new List<string> { "CanIBeHacked.com", "HaveIBeenPwned.com", "IsMyDataSafe.org" },
+            CorrectAnswerIndex = 1,
+            Explanation = "HaveIBeenPwned.com is a reputable, free service that aggregates data from hundreds of breaches, allowing you to check your exposure."
+        },
+        new QuizQuestion {
+            QuestionText = "What does 'end-to-end encryption' (E2EE) mean?",
+            Options = new List<string> { "The data is encrypted only on the sender's device", "The data is encrypted on the server", "Only the sender and intended recipient can read the message" },
+            CorrectAnswerIndex = 2,
+            Explanation = "E2EE ensures that no one in between, not even the company providing the service (like WhatsApp or Signal), can decipher the messages."
+        },
+        new QuizQuestion {
+            QuestionText = "Is it safe to share your password with a close friend or family member?",
+            Options = new List<string> { "Yes, if you trust them", "No, passwords should never be shared" },
+            CorrectAnswerIndex = 1,
+            Explanation = "Passwords should be treated like toothbrushes: never share them. If someone needs access, use features like guest accounts or family sharing plans."
+        },
+        new QuizQuestion {
+            QuestionText = "What is 'Adware'?",
+            Options = new List<string> { "Software that helps you make advertisements", "Software that automatically displays or downloads unwanted advertising material", "A hardware device for blocking ads" },
+            CorrectAnswerIndex = 1,
+            Explanation = "Adware is a type of malware that bombards you with pop-ups and ads, often tracks your browsing habits, and can slow down your computer."
+        },
+        new QuizQuestion {
+            QuestionText = "If you receive a 'friend request' from someone you don't know on social media, you should:",
+            Options = new List<string> { "Accept it to be friendly", "Ignore or delete the request", "Accept it, but restrict their access" },
+            CorrectAnswerIndex = 1,
+            Explanation = "Accepting requests from strangers can expose your personal information to scammers or fake accounts. It's safest to only connect with people you know."
+        },
+        new QuizQuestion {
+            QuestionText = "The term 'digital footprint' refers to:",
+            Options = new List<string> { "The size of your hard drive", "The trail of data you leave behind when you use the internet", "The number of devices you own" },
+            CorrectAnswerIndex = 1,
+            Explanation = "Your digital footprint includes everything from social media posts and browsing history to online purchases. It's important to be mindful of what you share."
+        },
+        new QuizQuestion {
+            QuestionText = "A 'Denial-of-Service' (DoS) attack aims to:",
+            Options = new List<string> { "Steal data from a server", "Make a website or service unavailable to legitimate users", "Delete a user's account" },
+            CorrectAnswerIndex = 1,
+            Explanation = "A DoS attack floods a server with so much traffic that it becomes overwhelmed and cannot respond to normal requests."
+
+        }   
+        
+        };
         }
         #endregion
 
@@ -333,16 +541,56 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             AddBotMessageToChat(helpText, "suggestion");
         }
 
-        private void ClearChatButton_Click(object sender, RoutedEventArgs e) => StartNewSession();
-        private void ShowStatsButton_Click(object sender, RoutedEventArgs e) => ShowExitSummary(false);
-        private void TasksButton_Click(object sender, RoutedEventArgs e) { var taskWindow = new TaskWindow(currentUser.Tasks) { Owner = this }; taskWindow.ShowDialog(); }
-        private async void QuizButton_Click(object sender, RoutedEventArgs e) => await StartQuizAsync();
-        private void ActivityLogButton_Click(object sender, RoutedEventArgs e) { _logPageIndex = 0; AddBotMessageToChat(FormatLogPage(), "summary"); }
+        private void ClearChatButton_Click(object sender, RoutedEventArgs e)
+        {
+            StartNewSession();
+        }
+
+        private void ShowStatsButton_Click(object sender, RoutedEventArgs e)
+        {
+            ShowExitSummary(false);
+        }
+
+        private void TasksButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Creates and shows the modal dialog for managing tasks.
+            var taskWindow = new TaskWindow(currentUser.Tasks)
+            {
+                Owner = this // This makes the new window appear centered over the main window.
+            };
+            taskWindow.ShowDialog();
+        }
+
+        private async void QuizButton_Click(object sender, RoutedEventArgs e)
+        {
+            await StartQuizAsync();
+        }
+
+        private void ActivityLogButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Resets to the first page and displays the log directly in the chat.
+            _logPageIndex = 0;
+            string logPageContent = FormatLogPage();
+            AddBotMessageToChat(logPageContent, "summary");
+        }
+
+        // --- Chat Display Helpers ---
 
         private void AddUserMessageToChat(string message)
         {
-            var border = new Border { Style = (Style)FindResource("UserBubbleStyle") };
-            var textBlock = new TextBlock { Text = message, Foreground = Brushes.White, FontSize = 14, TextWrapping = TextWrapping.Wrap };
+            var border = new Border
+            {
+                Style = (Style)FindResource("UserBubbleStyle")
+            };
+
+            var textBlock = new TextBlock
+            {
+                Text = message,
+                Foreground = Brushes.White,
+                FontSize = 14,
+                TextWrapping = TextWrapping.Wrap
+            };
+
             border.Child = textBlock;
             ChatPanel.Children.Add(border);
             ScrollToBottom();
@@ -350,8 +598,20 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 
         private void AddBotMessageToChat(string message, string sentiment)
         {
-            var border = new Border { Style = (Style)FindResource("BotBubbleStyle"), Background = new SolidColorBrush(sentimentAnalyzer.GetSentimentColor(sentiment)) };
-            var textBlock = new TextBlock { Text = $"{sentimentAnalyzer.GetSentimentEmoji(sentiment)} {message}", Foreground = Brushes.White, FontSize = 14, TextWrapping = TextWrapping.Wrap };
+            var border = new Border
+            {
+                Style = (Style)FindResource("BotBubbleStyle"),
+                Background = new SolidColorBrush(sentimentAnalyzer.GetSentimentColor(sentiment))
+            };
+
+            var textBlock = new TextBlock
+            {
+                Text = $"{sentimentAnalyzer.GetSentimentEmoji(sentiment)} {message}",
+                Foreground = Brushes.White,
+                FontSize = 14,
+                TextWrapping = TextWrapping.Wrap
+            };
+
             border.Child = textBlock;
             ChatPanel.Children.Add(border);
             ScrollToBottom();
@@ -364,28 +624,78 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
                 ShowTypingIndicator(true);
                 await Task.Delay(delay);
             }
+
             AddBotMessageToChat(message, sentiment);
             ShowTypingIndicator(false);
         }
 
-        private void ResetInputBox() { InputTextBox.Text = ""; }
-        private void ShowTypingIndicator(bool show) { TypingIndicator.Visibility = show ? Visibility.Visible : Visibility.Collapsed; if (show) typingIndicatorTimer.Start(); else typingIndicatorTimer.Stop(); }
-        private void TypingIndicatorTimer_Tick(object sender, EventArgs e) => TypingDots.Text = TypingDots.Text.Length >= 3 ? "." : TypingDots.Text + ".";
-        private void ScrollToBottom() => ChatScrollViewer.ScrollToEnd();
-        private void UpdateUserNameDisplay() { if (currentUser.Name != "Guest") UserNameDisplay.Text = $"Hello, {currentUser.Name}!"; }
+        // --- Typing Indicator and UI State Helpers ---
+
+        private void ResetInputBox()
+        {
+            InputTextBox.Text = "";
+        }
+
+        private void ShowTypingIndicator(bool show)
+        {
+            TypingIndicator.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            if (show)
+            {
+                typingIndicatorTimer.Start();
+            }
+            else
+            {
+                typingIndicatorTimer.Stop();
+            }
+        }
+
+        private void TypingIndicatorTimer_Tick(object sender, EventArgs e)
+        {
+            if (TypingDots.Text.Length >= 3)
+            {
+                TypingDots.Text = ".";
+            }
+            else
+            {
+                TypingDots.Text += ".";
+            }
+        }
+
+        private void ScrollToBottom()
+        {
+            ChatScrollViewer.ScrollToEnd();
+        }
+
+        private void UpdateUserNameDisplay()
+        {
+            if (currentUser.Name != "Guest")
+            {
+                UserNameDisplay.Text = $"Hello, {currentUser.Name}!";
+            }
+        }
+
+        // --- Miscellaneous Logic Handlers ---
 
         private void ShowExitSummary(bool isExiting)
         {
-            var summary = $"User: " +
-                $"{currentUser.Name}" +
-                $"\nInteractions: " +
-                $"{currentUser.InteractionCount}" +
-                $"\nDuration: " +
-                $"{(DateTime.Now - currentUser.SessionStartTime):mm\\:ss}";
+            // Build the summary string
+            var summary = $"User: {currentUser.Name}\n" +
+                          $"Interactions: {currentUser.InteractionCount}\n" +
+                          $"Duration: {(DateTime.Now - currentUser.SessionStartTime):mm\\:ss}";
 
-            if (currentUser.InterestsTopics.Any()) summary += $"\nTopics: {string.Join(", ", currentUser.InterestsTopics)}";
+            if (currentUser.InterestsTopics.Any())
+            {
+                summary += $"\nTopics: {string.Join(", ", currentUser.InterestsTopics)}";
+            }
+
             AddBotMessageToChat(summary, "summary");
-            if (isExiting) { AddBotMessageToChat($"Goodbye, {currentUser.Name}!", "neutral"); Task.Delay(3000).ContinueWith(_ => Dispatcher.Invoke(Close)); }
+
+            // If exiting, show goodbye message and schedule the application to close.
+            if (isExiting)
+            {
+                AddBotMessageToChat($"Goodbye, {currentUser.Name}!", "neutral");
+                Task.Delay(3000).ContinueWith(_ => Dispatcher.Invoke(Close));
+            }
         }
 
         private void PlayWelcomeAudio()
@@ -394,7 +704,7 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
             {
                 try
                 {
-                    
+                    // Ensure 'welcome.wav' is in an 'Assets' folder and its
                     // 'Copy to Output Directory' property is set to 'Copy if newer'.
                     using (var player = new SoundPlayer("Assets/welcome.wav"))
                     {
@@ -404,14 +714,31 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
                 }
                 catch (Exception ex)
                 {
+                    // Log the audio error but don't crash the application.
                     ActivityLogger.Log(ActivityType.System, $"Audio error: {ex.Message}");
                 }
             }
         }
 
-        private void InputTextBox_GotFocus(object sender, RoutedEventArgs e) { if (InputTextBox.Text == PlaceholderText) { InputTextBox.Text = ""; InputTextBox.Foreground = Brushes.White; } }
-        private void InputTextBox_LostFocus(object sender, RoutedEventArgs e) { if (string.IsNullOrWhiteSpace(InputTextBox.Text)) { InputTextBox.Text = PlaceholderText; InputTextBox.Foreground = Brushes.Gray; } }
+        private void InputTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (InputTextBox.Text == PlaceholderText)
+            {
+                InputTextBox.Text = "";
+                InputTextBox.Foreground = Brushes.White;
+            }
+        }
+
+        private void InputTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(InputTextBox.Text))
+            {
+                InputTextBox.Text = PlaceholderText;
+                InputTextBox.Foreground = Brushes.Gray;
+            }
+        }
 
         #endregion
+
     }
 }
