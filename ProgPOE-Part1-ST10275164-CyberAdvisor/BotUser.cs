@@ -1,8 +1,7 @@
-﻿using System;
+﻿// --- BotUser.cs ---
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 {
@@ -15,6 +14,9 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
         public DateTime SessionStartTime { get; set; } = DateTime.Now;
         public string LastSentiment { get; set; } = "neutral";
         public int InteractionCount { get; set; } = 0;
+
+        // NEW: Property to hold user's tasks
+        public List<CyberTask> Tasks { get; set; } = new List<CyberTask>();
 
         public void AddInterest(string topic)
         {

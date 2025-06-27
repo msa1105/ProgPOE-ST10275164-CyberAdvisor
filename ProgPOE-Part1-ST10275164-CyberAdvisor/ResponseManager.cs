@@ -1,222 +1,177 @@
-﻿using System;
+﻿// --- ResponseManager.cs (Complete Grandmaster Knowledge Base Version) ---
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 {
-    public class ResponseManager // Reference: https://stackoverflow.com/questions/13206839/how-to-use-a-delegate-in-c-sharp
-
+    public class TopicData
     {
-        private readonly Dictionary<string, List<string>> keywordResponses;
-        private readonly Dictionary<string, List<string>> sentimentResponses;
+        public List<string> Responses { get; set; }
+    }
+
+    public class ResponseManager
+    {
+        private readonly Dictionary<string, TopicData> topicResponses;
         private readonly Random random;
         private readonly List<string> fallbackResponses;
-
-        // Delegate for response filtering based on user data
-        public delegate bool ResponseFilter(BotUser user, string topic);
-        public delegate string ResponseModifier(string response, BotUser user, string sentiment);
 
         public ResponseManager()
         {
             random = new Random();
-            keywordResponses = new Dictionary<string, List<string>>();
-            sentimentResponses = new Dictionary<string, List<string>>();
+            topicResponses = new Dictionary<string, TopicData>();
             fallbackResponses = new List<string>();
-            InitializeKeywordResponses();
-            InitializeSentimentResponses();
+            InitializeTopicResponses();
             InitializeFallbackResponses();
         }
 
-        private void InitializeKeywordResponses() // Reference: https://stackoverflow.com/questions/3132126/how-do-i-select-a-random-value-from-a-listt
-
+        private void InitializeTopicResponses()
         {
-            keywordResponses["password"] = new List<string>
+            // --- Authentication Family ---
+            topicResponses["Password"] = new TopicData
             {
-                "🔐 A strong password should be at least 12 characters long with a mix of letters, numbers, and symbols!",
-                "🔒 Never reuse passwords across accounts - each should be unique like a fingerprint!",
-                "🛡️ Consider using a password manager to generate and store complex passwords securely!",
-                "⚡ Pro tip: Use passphrases like 'Coffee$Morning2024!' - they're easier to remember but hard to crack!"
+                Responses = new List<string> {
+                "A strong password is your first line of defense. Aim for at least 16 characters with a mix of uppercase, lowercase, numbers, and symbols like !@#$%.",
+                "Avoid using personal information like birthdays, names, or pet's names. This info is often public and easy for attackers to guess.",
+                "Passphrases are a modern, highly secure method. A random four-word phrase like 'CorrectHorseBatteryStaple' is extremely hard to crack but easy to remember.",
+                "Using a password manager is highly recommended. It generates and stores unique, complex passwords for every site, so you only have to remember one strong master password.",
+                "Never write your passwords on a sticky note attached to your monitor or keep them in an unencrypted text file. Treat them like a house key.",
+                "Regularly check if your email address has been involved in data breaches using 'Have I Been Pwned'. If so, change the password for that service and any others that shared it."
+            }
             };
-            keywordResponses["phishing"] = new List<string>
+            topicResponses["TwoFactorAuth"] = new TopicData
             {
-                "🎣 Phishing emails often create urgency - 'Act now or lose your account!' Don't fall for it!",
-                "🔍 Always check the sender's email carefully - scammers use look-alike addresses!",
-                "🚫 Legitimate companies won't ask for passwords via email. When in doubt, contact them directly!",
-                "🛡️ Hover over links before clicking - does the URL match what you'd expect?"
+                Responses = new List<string> {
+                "Two-Factor Authentication (2FA) is a critical security layer. It combines something you know (password) with something you have (phone).",
+                "Enable 2FA on every important account: email, banking, social media. It's one of the single most effective things you can do to protect your digital life.",
+                "Use an authenticator app (like Google Authenticator, Authy) for 2FA instead of SMS texts. SMS can be vulnerable to 'SIM-swapping' attacks.",
+                "When you set up 2FA, you'll get backup codes. Print them and store them somewhere safe, like a locked drawer. They are your lifeline if you lose your phone.",
+                "A hardware security key (like a YubiKey) is the gold standard for 2FA. It's a physical device that you plug in or tap to approve a login, making it immune to phishing.",
+                "Even with 2FA, be cautious of 'MFA fatigue' attacks, where an attacker spams you with login requests hoping you'll accidentally approve one."
+            }
             };
-            keywordResponses["privacy"] = new List<string>
-            {
-                "🕵️ Your privacy is precious! Review app permissions regularly - why does a flashlight app need your contacts?",
-                "🔒 Use privacy-focused browsers and search engines to reduce data tracking!",
-                "📱 Social media privacy settings change often - check them monthly!",
-                "🌐 Consider using a VPN to encrypt your internet traffic and protect your browsing habits!"
-            };
-            keywordResponses["scam"] = new List<string>
-            {
-                "⚠️ If it sounds too good to be true, it probably is! Trust your instincts!",
-                "📞 Scammers often pressure you to act quickly - legitimate businesses give you time to think!",
-                "💰 Never send money, gift cards, or personal info to someone you've never met in person!",
-                "🔍 Research unknown contacts online - many scam phone numbers and emails are reported by others!"
-            };
-            keywordResponses["malware"] = new List<string>
-            {
-                "🦠 Keep your antivirus updated and run regular scans - prevention is better than cure!",
-                "⬇️ Only download software from official sources - third-party sites often bundle malware!",
-                "🔄 Keep all your software updated - security patches fix vulnerabilities that malware exploits!",
-                "🚫 Be suspicious of unexpected pop-ups claiming your computer is infected - they're often malware themselves!"
-            };
-            keywordResponses["wifi"] = new List<string>
-            {
-                "📶 Public WiFi is like a postcard - anyone can read what you're sending!",
-                "🔐 Use a VPN on public networks to encrypt your data and stay invisible to hackers!",
-                "🏠 Set up a guest network at home to keep your main devices separate from visitors!",
-                "⚠️ Avoid online banking or shopping on public WiFi - wait until you're on a secure network!"
-            };
-            keywordResponses["2fa"] = new List<string>
-            {
-                "🛡️ Two-Factor Authentication is like having two locks on your door - much safer!",
-                "📱 Use authenticator apps instead of SMS when possible - they're more secure!",
-                "🔑 Enable 2FA on all important accounts: email, banking, social media, and work accounts!",
-                "💡 Keep backup codes in a safe place - you'll need them if you lose your phone!"
-            };
-        }
 
-        private void InitializeSentimentResponses()
-        {
-            sentimentResponses["worried"] = new List<string>
+            // --- Malware Family ---
+            topicResponses["Malware"] = new TopicData
             {
-                "I understand your concerns - cybersecurity can feel overwhelming, but you're taking the right steps by learning!",
-                "It's completely natural to feel worried about online threats. Let's break this down into manageable steps.",
-                "Your caution is actually a strength! Awareness is the first line of defense against cyber threats.",
-                "Don't worry - with the right knowledge and habits, you can significantly reduce your risk online."
+                Responses = new List<string> {
+                "Malware is short for 'Malicious Software'—an umbrella term for viruses, trojans, ransomware, and spyware.",
+                "The best defense against malware is caution. Don't click suspicious links, don't open unexpected attachments, and only download software from official sources.",
+                "Keep your operating system and all applications (especially your web browser) updated. Updates contain critical security patches that block malware.",
+                "Use a reputable antivirus program and ensure its real-time protection is enabled. It's your digital immune system.",
+                "If you suspect malware, disconnect the device from the internet to prevent it from spreading. Then, run a full system scan with your antivirus."
+            }
             };
-            sentimentResponses["frustrated"] = new List<string>
+            topicResponses["Ransomware"] = new TopicData
             {
-                "I can sense your frustration. Let me try explaining this in a simpler way.",
-                "Cybersecurity can be confusing at first, but don't give up! You're building important skills.",
-                "I understand this might be overwhelming. Let's focus on one thing at a time.",
-                "Take a deep breath - even cybersecurity experts started where you are now!"
+                Responses = new List<string> {
+                "Ransomware is malware that encrypts your personal files—documents, photos, videos—making them completely inaccessible.",
+                "After encrypting files, ransomware displays a message demanding a payment (a 'ransom'), usually in cryptocurrency, for the decryption key.",
+                "The single most important defense is having regular, recent backups of your important data, stored offline or in the cloud where malware can't reach it.",
+                "Security experts and law enforcement universally advise against paying the ransom. There's no guarantee you'll get your files back, and it funds criminal enterprises.",
+                "Ransomware often spreads through phishing emails with malicious attachments, or by exploiting unpatched security vulnerabilities in software."
+            }
             };
-            sentimentResponses["curious"] = new List<string>
+            topicResponses["Virus"] = new TopicData
             {
-                "I love your curiosity! That's exactly the right attitude for staying cyber safe.",
-                "Great question! Your eagerness to learn will serve you well in cybersecurity.",
-                "Your curiosity is fantastic - it shows you're thinking critically about online safety!",
-                "Excellent! The more you know, the better protected you'll be online."
+                Responses = new List<string> {
+                "A computer virus is malware that, when executed, replicates by inserting its own code into other programs. It needs a host program to spread.",
+                "Viruses spread when the software they are attached to is transferred between computers via network, disk, or infected email attachments.",
+                "Effects can range from annoying pop-ups to destroying data, corrupting your system, or stealing information.",
+                "A good antivirus program is essential for detecting and removing viruses by scanning files against a database of known virus 'signatures'.",
+                "To avoid viruses, be very cautious about opening unexpected email attachments, even from people you know, and only download from trusted, official sources."
+            }
             };
-            sentimentResponses["overwhelmed"] = new List<string>
+
+            // --- Network & Web Family ---
+            topicResponses["VPN"] = new TopicData
             {
-                "Let's slow down and focus on just the basics for now. You don't need to learn everything at once!",
-                "I can see this might be a lot to process. How about we start with just one simple step?",
-                "Don't worry about mastering everything immediately - cybersecurity is a journey, not a race!",
-                "Let's break this down into smaller, manageable pieces. What would you like to focus on first?"
+                Responses = new List<string> {
+                "A VPN (Virtual Private Network) encrypts your internet traffic, making it unreadable to anyone on your network, including on public Wi-Fi or by your ISP.",
+                "A VPN hides your real IP address, which helps protect your privacy and can allow you to access content that might be restricted in your geographical region.",
+                "Be very careful with 'free' VPN services. They often have slow speeds, data limits, or in the worst cases, may sell your browsing data to advertisers.",
+                "For maximum privacy, choose a paid VPN provider with a strict 'no-logs' policy that has undergone public, third-party security audits.",
+                "A VPN does not make you 100% anonymous. It's one powerful tool in a privacy toolkit, but doesn't protect you from malware or if you voluntarily give your data to a website like Facebook.",
+                "Using a VPN can sometimes slow your connection, as data travels through an extra server. Reputable providers minimize this speed loss."
+            }
             };
-            sentimentResponses["confident"] = new List<string>
+            topicResponses["WiFiSecurity"] = new TopicData
             {
-                "That's the spirit! Your confidence will help you make better security decisions.",
-                "Excellent attitude! Confidence combined with knowledge makes you a hard target for cybercriminals.",
-                "I'm glad you're feeling confident! Keep that energy as you continue learning.",
-                "Perfect! With that mindset, you'll be a cybersecurity champion in no time!"
+                Responses = new List<string> {
+                "When setting up home Wi-Fi, always change the default administrator username and password for the router's settings page.",
+                "Your Wi-Fi network should be protected with a strong, unique password using WPA3 or at least WPA2 encryption.",
+                "Using a 'Guest Network' on your home router is great practice. It provides internet for visitors on an isolated network, so they can't access your personal devices or files.",
+                "Be extremely careful on public Wi-Fi (cafes, airports). An attacker on the same network can 'sniff' your traffic. Always use a VPN on public networks.",
+                "Your router's firmware should be kept up to date. Manufacturers release patches for security holes. Check your router manufacturer's website for updates."
+            }
+            };
+            topicResponses["HTTPS"] = new TopicData
+            {
+                Responses = new List<string> {
+                "HTTPS (Hypertext Transfer Protocol Secure) means the connection between your browser and the website is encrypted. Look for the padlock icon in the address bar.",
+                "Encryption provided by HTTPS prevents 'man-in-the-middle' attacks, where an attacker tries to eavesdrop on your communication.",
+                "Always look for the HTTPS padlock before entering any sensitive information like a password or credit card number.",
+                "HTTPS uses SSL/TLS technology to create the secure connection, ensuring data integrity, confidentiality, and authentication.",
+                "Modern browsers will warn you loudly if you're on an insecure HTTP site where you're about to enter a password. Heed these warnings!"
+            }
+            };
+
+            // --- Social Engineering Family ---
+            topicResponses["Phishing"] = new TopicData
+            {
+                Responses = new List<string> {
+                "Phishing attacks use fake emails, texts, or websites to trick you into revealing sensitive information. They often impersonate trusted brands like Microsoft, Google, or your bank.",
+                "Phishing attacks create a false sense of urgency. They use phrases like 'Your account will be suspended' to make you panic and click without thinking.",
+                "Always inspect the sender's email address. Scammers often use addresses that look close to a real one, like 'support@microsft.com'.",
+                "Before clicking any link in an email, hover your mouse over it. The actual destination URL will pop up. If it looks suspicious, don't click it.",
+                "Be wary of emails with poor grammar or spelling mistakes. Legitimate companies usually have teams that proofread their communications.",
+                "'Smishing' is phishing via SMS (text messages), and 'Vishing' is phishing via voice calls. Be suspicious of urgent requests from any channel."
+            }
+            };
+
+            // --- Concepts & Practices Family ---
+            topicResponses["DataBreach"] = new TopicData
+            {
+                Responses = new List<string> {
+                "A data breach is an incident where sensitive information is stolen or released from a company's database by an unauthorized individual.",
+                "The stolen data often includes usernames, email addresses, and passwords, which criminals then sell on the dark web or use for identity theft.",
+                "The best defense against the impact of a breach is to use unique passwords for every service. That way, a breach at one company doesn't compromise your accounts elsewhere.",
+                "You can check if your email account has been compromised in known data breaches using the free service 'Have I Been Pwned'.",
+                "If you find out you've been part of a breach, immediately change the password for that service and enable 2FA if you haven't already."
+            }
+            };
+            topicResponses["Encryption"] = new TopicData
+            {
+                Responses = new List<string> {
+                "Encryption is the process of scrambling data into a code (ciphertext) to prevent unauthorized access. Only someone with the correct key can unscramble it.",
+                "End-to-end encryption (E2EE), used by apps like Signal and WhatsApp, ensures that only you and the recipient can read what is sent. No one in between, not even the company, can access it.",
+                "Full-disk encryption, like BitLocker on Windows and FileVault on macOS, encrypts your entire hard drive. If your laptop is stolen, the thief can't access your files without your password.",
+                "HTTPS is encryption 'in transit', protecting your data as it travels across the internet from your browser to a website.",
+                "Encryption is a fundamental building block of digital security, protecting everything from online banking to private messages."
+            }
             };
         }
 
         private void InitializeFallbackResponses()
         {
-            fallbackResponses.Add("I'm not sure I understand that. Can you try rephrasing your question?");
-            fallbackResponses.Add("Hmm, that's not something I'm familiar with. Could you ask about password safety, phishing, or privacy instead?");
-            fallbackResponses.Add("I'd love to help, but I didn't quite catch that. Try asking about cybersecurity topics like scams or malware!");
-            fallbackResponses.Add("Let me think... I'm not sure about that one. How about asking me about WiFi safety or two-factor authentication?");
-            fallbackResponses.Add("That's outside my expertise area. I'm great with cybersecurity topics though - try asking about those!");
+            fallbackResponses.Add("I'm not quite sure about that. Could you rephrase or ask about another cybersecurity topic?");
+            fallbackResponses.Add("That's a bit outside my current knowledge base. I'm great with topics like passwords, malware, and VPNs though!");
         }
 
-        public string GetKeywordResponse(string keyword, BotUser user, string sentiment = "neutral") // Reference: https://stackoverflow.com/questions/6004219/how-do-i-search-for-a-value-in-a-dictionary
+        public string GetKeywordResponse(string topic, BotUser user)
         {
-            // Find matching keyword
-            var matchingKeyword = keywordResponses.Keys.FirstOrDefault(k =>
-                keyword.ToLower().Contains(k) || k.Contains(keyword.ToLower()));
-
-            if (matchingKeyword != null)
+            if (topicResponses.ContainsKey(topic))
             {
-                var responses = keywordResponses[matchingKeyword];
-                var baseResponse = responses[random.Next(responses.Count)];
-
-                // Add personal touch if user has shown interest in this topic before
-                if (user.HasInterest(matchingKeyword))
-                {
-                    baseResponse = $"Since you're interested in {matchingKeyword}, here's another tip: " + baseResponse;
-                }
-
-                return ModifyResponseForSentiment(baseResponse, sentiment, user);
+                var topicData = topicResponses[topic];
+                return topicData.Responses[random.Next(topicData.Responses.Count)];
             }
-
             return null;
-        }
-
-        public string GetSentimentResponse(string sentiment, BotUser user)
-        {
-            if (sentimentResponses.ContainsKey(sentiment))
-            {
-                var responses = sentimentResponses[sentiment];
-                return responses[random.Next(responses.Count)];
-            }
-            return "";
         }
 
         public string GetFallbackResponse(BotUser user)
         {
-            var response = fallbackResponses[random.Next(fallbackResponses.Count)];
-
-            // Personalize based on user's interests
-            if (user.InterestsTopics.Any())
-            {
-                var interest = user.InterestsTopics.First();
-                response += $" Since you've been interested in {interest}, would you like to know more about that?";
-            }
-
-            return response;
-        }
-
-        private string ModifyResponseForSentiment(string response, string sentiment, BotUser user)
-        {
-            return sentiment switch
-            {
-                "worried" or "frustrated" or "overwhelmed" => $"Hey {user.Name}, take it easy. " + response,
-                "curious" => $"{user.Name}, " + response,
-                "confident" or "happy" => $"Awesome, {user.Name}! " + response,
-                _ => response
-            };
-        }
-
-        public List<string> FindKeywords(string input)
-        {
-            var foundKeywords = new List<string>();
-            var inputLower = input.ToLower();
-
-            foreach (var keyword in keywordResponses.Keys)
-            {
-                if (inputLower.Contains(keyword))
-                {
-                    foundKeywords.Add(keyword);
-                }
-            }
-
-            return foundKeywords;
-        }
-
-        // Method using delegates for advanced filtering
-        public string GetFilteredResponse(string input, BotUser user, ResponseFilter filter)
-        {
-            var keywords = FindKeywords(input);
-
-            foreach (var keyword in keywords)
-            {
-                if (filter(user, keyword))
-                {
-                    return GetKeywordResponse(keyword, user);
-                }
-            }
-
-            return GetFallbackResponse(user);
+            return fallbackResponses[random.Next(fallbackResponses.Count)];
         }
     }
 }

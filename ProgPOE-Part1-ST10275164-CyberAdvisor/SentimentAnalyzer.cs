@@ -1,6 +1,9 @@
-﻿using System;
+﻿// --- SentimentAnalyzer.cs ---
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Media;
+using Color = System.Windows.Media.Color; // NEW: Added for WPF Color
 
 namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 {
@@ -10,8 +13,7 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
 
         public SentimentAnalyzer()
         {
-            sentimentKeywords = new Dictionary<string, List<string>> // Reference: https://stackoverflow.com/questions/2099340/using-a-dictionary-with-list-values
-
+            sentimentKeywords = new Dictionary<string, List<string>>
             {
                 ["worried"] = new List<string> { "worried", "concerned", "anxious", "scared", "afraid", "nervous", "panic", "stress" },
                 ["curious"] = new List<string> { "curious", "interested", "wonder", "learn", "know more", "tell me", "explain", "how does" },
@@ -28,8 +30,6 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
                 return "neutral";
 
             input = input.ToLower();
-
-            // Check for sentiment keywords with priority (more specific sentiments first)
             var sentimentScores = new Dictionary<string, int>();
 
             foreach (var sentiment in sentimentKeywords)
@@ -41,25 +41,25 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
                 }
             }
 
-            if (sentimentScores.Any())
-            {
-                return sentimentScores.OrderByDescending(x => x.Value).First().Key;
-            }
-
-            return "neutral";
+            return sentimentScores.Any() ? sentimentScores.OrderByDescending(x => x.Value).First().Key : "neutral";
         }
 
-        public ConsoleColor GetSentimentColor(string sentiment)
+        // MODIFIED: This now returns a WPF Color directly.
+        public Color GetSentimentColor(string sentiment)
         {
             return sentiment switch
             {
-                "worried" => ConsoleColor.Red,
-                "frustrated" => ConsoleColor.DarkRed,
-                "overwhelmed" => ConsoleColor.DarkYellow,
-                "curious" => ConsoleColor.Blue,
-                "happy" => ConsoleColor.Green,
-                "confident" => ConsoleColor.Cyan,
-                _ => ConsoleColor.White
+                "worried" => Colors.IndianRed,
+                "frustrated" => Colors.DarkRed,
+                "overwhelmed" => Colors.Orange,
+                "curious" => Colors.RoyalBlue,
+                "happy" => Colors.MediumSeaGreen,
+                "confident" => Colors.CadetBlue,
+                "summary" => Colors.SlateGray,
+                "suggestion" => Colors.Teal,
+                "context" => Colors.DarkSlateGray,
+                "error" => Colors.Firebrick,
+                _ => Color.FromRgb(94, 129, 172) // Default bot color
             };
         }
 
@@ -73,6 +73,10 @@ namespace ProgPOE_Part1_ST10275164_CyberAdvisor
                 "curious" => "🤔",
                 "happy" => "😊",
                 "confident" => "😎",
+                "summary" => "📊",
+                "suggestion" => "🔗",
+                "context" => "💭",
+                "error" => "⚠️",
                 _ => "🤖"
             };
         }

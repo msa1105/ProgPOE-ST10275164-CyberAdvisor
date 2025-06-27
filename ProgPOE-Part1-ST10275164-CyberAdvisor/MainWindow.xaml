@@ -1,0 +1,125 @@
+<!-- MainWindow.xaml (Updated) -->
+<Window x:Class="ProgPOE_Part1_ST10275164_CyberAdvisor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="CyberAdvisor - Enhanced AI Security Mentor" 
+        Height="700" Width="900"
+        Background="#FF1E1E2E"
+        WindowState="Maximized"
+        ResizeMode="CanResize">
+
+    <Window.Resources>
+        <!-- Styles are the same as you had, no changes needed here -->
+        <Style x:Key="ChatBubbleStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="Margin" Value="10,5"/>
+            <Setter Property="MaxWidth" Value="600"/>
+        </Style>
+
+        <Style x:Key="UserBubbleStyle" TargetType="Border" BasedOn="{StaticResource ChatBubbleStyle}">
+            <Setter Property="Background" Value="#FF4C566A"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+
+        <Style x:Key="BotBubbleStyle" TargetType="Border" BasedOn="{StaticResource ChatBubbleStyle}">
+            <Setter Property="Background" Value="#FF5E81AC"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
+
+        <Style x:Key="InputTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="#FF2E3440"/>
+            <Setter Property="Foreground" Value="#FFECEFF4"/>
+            <Setter Property="BorderBrush" Value="#FF4C566A"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            </Style>
+
+            <Style x:Key="SendButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="#FF88C0D0"/>
+                <Setter Property="Foreground" Value="#FF2E3440"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="15,10"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Cursor" Value="Hand"/>
+            </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="80"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="70"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#FF3B4252" BorderBrush="#FF4C566A" BorderThickness="0,0,0,2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0">
+                    <TextBlock Text="???" FontSize="32" Margin="0,0,10,0"/>
+                    <StackPanel>
+                        <TextBlock Text="CyberAdvisor" FontSize="24" FontWeight="Bold" Foreground="#FFECEFF4"/>
+                        <TextBlock Text="Enhanced AI Security Mentor" FontSize="12" Foreground="#FF81A1C1"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- MODIFIED: Added new buttons for features -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0">
+                    <TextBlock x:Name="UserNameDisplay" Text="Welcome, Guest!" FontSize="14" Foreground="#FFECEFF4" Margin="0,0,15,0" VerticalAlignment="Center"/>
+                    <Button x:Name="TasksButton" Content="?? Tasks" Style="{StaticResource SendButtonStyle}" Background="#FFD08770" Click="TasksButton_Click" Margin="0,0,10,0"/>
+                    <Button x:Name="QuizButton" Content="? Quiz" Style="{StaticResource SendButtonStyle}" Background="#FFA3BE8C" Click="QuizButton_Click" Margin="0,0,10,0"/>
+                    <Button x:Name="ActivityLogButton" Content="?? Log" Style="{StaticResource SendButtonStyle}" Background="#FFB48EAD" Click="ActivityLogButton_Click" Margin="0,0,10,0"/>
+                    <Button x:Name="ShowStatsButton" Content="?? Stats" Style="{StaticResource SendButtonStyle}" Click="ShowStatsButton_Click" Margin="0,0,10,0"/>
+                    <Button x:Name="ClearChatButton" Content="Clear Chat" Style="{StaticResource SendButtonStyle}" Background="#FFBF616A" Click="ClearChatButton_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Chat Area -->
+        <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1" Background="#FF2E3440" 
+                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      Padding="10">
+            <StackPanel x:Name="ChatPanel" />
+        </ScrollViewer>
+
+        <!-- Typing Indicator -->
+        <Border x:Name="TypingIndicator" Grid.Row="2" Background="#FF3B4252" 
+                Height="40" Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0">
+                <TextBlock Text="??" FontSize="16" Margin="0,0,10,0"/>
+                <TextBlock Text="CyberAdvisor is typing..." FontStyle="Italic" 
+                          Foreground="#FF81A1C1" FontSize="12"/>
+                <TextBlock x:Name="TypingDots" Text="..." FontSize="12" Foreground="#FF81A1C1" Margin="5,0,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Input Area -->
+        <Border Grid.Row="3" Background="#FF3B4252" BorderBrush="#FF4C566A" BorderThickness="0,2,0,0">
+            <Grid Margin="20,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox x:Name="InputTextBox" Grid.Column="0" 
+                         Style="{StaticResource InputTextBoxStyle}"
+                         Text="Ask me anything, or type 'help' for commands..."
+                         KeyDown="InputTextBox_KeyDown"
+                         GotFocus="InputTextBox_GotFocus"
+                         LostFocus="InputTextBox_LostFocus"/>
+
+                <Button x:Name="SendButton" Grid.Column="1" Content="Send ??" 
+                        Style="{StaticResource SendButtonStyle}" 
+                        Margin="10,0,0,0" Click="SendButton_Click"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
